@@ -22,15 +22,21 @@ var db = Titanium.Database.open("ti_store");
 
         //Get TODOs from database
         var resultSet = db.execute("SELECT * FROM schema_migrations");
-        while (resultSet.isValidRow()) {
-            var row;
-            for (var i = 0; i < resultSet.fieldCount(); i++) {
-                row = resultSet.field(i);
-            }
-            results[row] = row;
-            resultSet.next();
+        if(resultSet!=null) {
+
+			while(resultSet.isValidRow()) {
+				var row;
+				for(var i = 0; i < resultSet.fieldCount(); i++) {
+					row = resultSet.field(i);
+				}
+				results[row] = row;
+				resultSet.next();
+			}
+			resultSet.close();
+
+     	
         }
-        resultSet.close();
+
 
         return results;
     }
@@ -39,19 +45,25 @@ var db = Titanium.Database.open("ti_store");
         var migrations = loadMigrations(db);
 
         var migration_dir = Titanium.Filesystem.getFile("db/migrations");
-        Ti.API.info(migration_dir);
-        var files = migration_dir.getDirectoryListing();
-        for (var i = 0; i < files.length; i++) {
-            var file = files[i];
+        if(migration_dir!=null) {
+	        Ti.API.info(migration_dir);
+		        var files = migration_dir.getDirectoryListing();
+		        if(files!=null) {
+			        for (var i = 0; i < files.length; i++) {
+			            var file = files[i];
+			
+			            var version = file.split(".")[0];
+			
+			            if (!migrations[version])
+			            {
+			                Ti.API.info("Running migration... " + version);
+			                Ti.include("../db/migrations/"  + file);
+			            }
+			        }        			        	
+		        }
 
-            var version = file.split(".")[0];
-
-            if (!migrations[version])
-            {
-                Ti.API.info("Running migration... " + version);
-                Ti.include("../db/migrations/"  + file);
-            }
         }
+
     }
 
     initialize_db(db);
